@@ -1,0 +1,2 @@
+model,mae,rmse,r2,adjusted_r2,observations,predictors_after_preprocessing
+Multivariate Linear Regression,18.373542111094498,41.29212412518076,0.36091622223508835,0.26546864503643275,178,23
