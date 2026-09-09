@@ -1,4 +1,4 @@
-# Module 1 — Data Pipeline
+# Module 1 - Data Pipeline
 
 ## 1. Overview
 
@@ -27,17 +27,17 @@ The scraper collects book information from the Books to Scrape website.
 
 The required fields extracted are:
 
-- Title
-- Price
-- Star rating
-- Availability
-- Category
+* Title
+* Price
+* Star rating
+* Availability
+* Category
 
 The scraper collected books from three categories:
 
-- Travel
-- Mystery
-- Poetry
+* Travel
+* Mystery
+* Poetry
 
 Total books scraped:
 
@@ -61,7 +61,7 @@ The raw GBP price is cleaned by removing the pound symbol and converting the val
 
 For example:
 
-`£45.17`
+`GBP 45.17`
 
 becomes:
 
@@ -75,11 +75,11 @@ The cleaned field is:
 
 The website provides ratings as words such as:
 
-- One
-- Two
-- Three
-- Four
-- Five
+* One
+* Two
+* Three
+* Four
+* Five
 
 These were converted to numeric values from 1 to 5.
 
@@ -87,13 +87,13 @@ These were converted to numeric values from 1 to 5.
 
 The availability text was converted into a Boolean field:
 
-- In stock → `True`
-- Not in stock → `False`
+* In stock -> `True`
+* Not in stock -> `False`
 
 The database stores this Boolean value as SQLite integer values:
 
-- `1` = True
-- `0` = False
+* `1` = True
+* `0` = False
 
 ### Price Conversion
 
@@ -103,7 +103,7 @@ A fixed exchange rate was used:
 
 Therefore:
 
-`price_inr = price_gbp × 105.50`
+`price_inr = price_gbp * 105.50`
 
 The exact exchange rate is fixed for reproducibility and is not retrieved dynamically.
 
@@ -115,13 +115,13 @@ The cleaned dataset was checked for missing values.
 
 The final dataset contains no missing values in:
 
-- title
-- category
-- price_gbp
-- price_inr
-- rating
-- in_stock
-- product_url
+* title
+* category
+* price_gbp
+* price_inr
+* rating
+* in_stock
+* product_url
 
 No median imputation was required because the scraped dataset contained no missing values after cleaning.
 
@@ -133,8 +133,8 @@ Duplicate URLs:
 
 Final cleaned dataset:
 
-- Rows: 62
-- Columns: 7
+* Rows: 62
+* Columns: 7
 
 ---
 
@@ -144,7 +144,7 @@ The cleaned data was stored in:
 
 `data_pipeline/books.db`
 
-The database uses exactly two normalized tables:
+The database uses exactly two normalized tables.
 
 ### categories
 
@@ -153,9 +153,11 @@ CREATE TABLE categories (
     category_id INTEGER PRIMARY KEY,
     category_name TEXT UNIQUE
 );
+```
 
+### books
 
-books
+```sql
 CREATE TABLE books (
     book_id INTEGER PRIMARY KEY,
     title TEXT,
@@ -165,146 +167,243 @@ CREATE TABLE books (
     in_stock INTEGER,
     category_id INTEGER REFERENCES categories(category_id)
 );
+```
 
-The category_id field connects each book to its category.
+The `category_id` field connects each book to its category.
 
 This separates category information from book information and avoids repeating category names for every book.
 
-6. Database Verification
+Foreign-key support is enabled in SQLite.
+
+---
+
+## 6. Database Verification
 
 The SQLite database was successfully created and verified.
 
 Database contents:
 
-Categories: 3
-Books: 62
+* Categories: `3`
+* Books: `62`
 
 The database contains the following categories:
 
-Mystery
-Poetry
-Travel
+* Mystery
+* Poetry
+* Travel
 
-Foreign-key support is enabled in SQLite.
+The database was also checked to confirm that both required tables exist:
 
-The database was also checked to confirm that both required tables exist.
+* `categories`
+* `books`
 
-7. SQL Queries
+The verification script confirmed the expected table structure, category count, and total book count.
+
+---
+
+## 7. SQL Queries
 
 Six SQL queries were implemented to demonstrate the required SQL operations.
 
-Query 1 — SELECT and WHERE
+### Query 1 - SELECT and WHERE
 
-Books with prices greater than £40 were selected.
+Books with prices greater than GBP 40 were selected.
 
-This demonstrates filtering records using WHERE.
+```sql
+SELECT *
+FROM books
+WHERE price_gbp > 40;
+```
 
-Query 2 — ORDER BY and LIMIT
+This demonstrates filtering records using `WHERE`.
+
+---
+
+### Query 2 - ORDER BY and LIMIT
 
 The 10 most expensive books were selected.
 
+```sql
+SELECT *
+FROM books
+ORDER BY price_gbp DESC
+LIMIT 10;
+```
+
 This demonstrates:
 
-ORDER BY
-LIMIT
-Query 3 — DISTINCT
+* `ORDER BY`
+* `LIMIT`
+
+---
+
+### Query 3 - DISTINCT
 
 Distinct book ratings were selected.
 
-This demonstrates the DISTINCT keyword.
+```sql
+SELECT DISTINCT rating
+FROM books
+ORDER BY rating;
+```
 
-Query 4 — BETWEEN
+This demonstrates the `DISTINCT` keyword.
 
-Books with prices between £20 and £30 were selected.
+---
 
-This demonstrates the BETWEEN operator.
+### Query 4 - BETWEEN
 
-Query 5 — IN
+Books with prices between GBP 20 and GBP 30 were selected.
 
-Books belonging to the Mystery or Poetry categories were selected using:
+```sql
+SELECT *
+FROM books
+WHERE price_gbp BETWEEN 20 AND 30
+ORDER BY price_gbp;
+```
 
-IN
+This demonstrates the `BETWEEN` operator.
 
-Query 6 — JOIN
+---
 
-Books were joined with the categories table using category_id.
+### Query 5 - IN
 
-This demonstrates a relational SQL JOIN.
+Books belonging to the Mystery or Poetry categories were selected.
 
-8. SQL and Pandas Verification
+```sql
+SELECT b.title, c.category_name
+FROM books AS b
+JOIN categories AS c
+    ON b.category_id = c.category_id
+WHERE c.category_name IN ('Mystery', 'Poetry');
+```
+
+This demonstrates the `IN` operator.
+
+---
+
+### Query 6 - JOIN
+
+Books were joined with the categories table using `category_id`.
+
+```sql
+SELECT
+    b.book_id,
+    b.title,
+    b.price_gbp,
+    b.price_inr,
+    b.rating,
+    b.in_stock,
+    c.category_name
+FROM books AS b
+JOIN categories AS c
+    ON b.category_id = c.category_id
+ORDER BY b.book_id;
+```
+
+This demonstrates a relational SQL `JOIN`.
+
+The SQL JOIN returned:
+
+`62 rows`
+
+---
+
+## 8. SQL and Pandas Verification
 
 SQL query results were loaded into pandas using:
 
+```python
 pd.read_sql()
+```
 
 The SQL JOIN result was independently reproduced using:
 
+```python
 pd.merge()
+```
 
 The verification produced:
 
+```text
 SQL JOIN rows: 62
 Pandas merge rows: 62
+Match: True
+```
 
 The SQL JOIN and pandas merge results matched.
 
 Verification result:
 
-True
+`True`
 
 Therefore, the SQL and pandas implementations produced equivalent JOIN results.
 
-9. Files
+This verifies that the relational database JOIN produces the same book-category relationships as the equivalent pandas merge.
+
+---
+
+## 9. Files
 
 The main files in this module are:
 
+```text
 data_pipeline/
-├── scraper.py
-├── database.py
-├── verify_database.py
-├── sql_queries.py
-├── cleaned_books.csv
-├── books.db
-└── README.md
-scraper.py
+|-- scraper.py
+|-- database.py
+|-- verify_database.py
+|-- sql_queries.py
+|-- cleaned_books.csv
+|-- books.db
+`-- README.md
+```
+
+### scraper.py
 
 Scrapes book information from Books to Scrape and performs data cleaning.
 
-database.py
+### database.py
 
 Creates the normalized SQLite database and inserts the cleaned book and category data.
 
-verify_database.py
+### verify_database.py
 
 Checks the database tables, categories, sample records, and total book count.
 
-sql_queries.py
+### sql_queries.py
 
 Runs the required SQL queries and verifies the SQL JOIN against a pandas merge.
 
-cleaned_books.csv
+### cleaned_books.csv
 
 Contains the cleaned scraped book dataset.
 
-books.db
+### books.db
 
 Contains the normalized SQLite database.
 
-10. Module 1 Conclusion
+### README.md
+
+Documents the complete Module 1 workflow, database design, SQL queries, verification results, and final outcome.
+
+---
+
+## 10. Module 1 Conclusion
 
 The data pipeline successfully performs the complete workflow from web scraping to structured database storage and verification.
 
 The final pipeline produced:
 
-62 scraped books
-3 categories
-Clean numeric prices
-Numeric ratings from 1 to 5
-Boolean stock status
-INR price conversion using the fixed rate of 105.50 INR per GBP
-A normalized two-table SQLite database
-Six SQL queries
-SQL JOIN verification using pandas
+* 62 scraped books
+* 3 categories
+* Clean numeric prices
+* Numeric ratings from 1 to 5
+* Boolean stock status
+* INR price conversion using the fixed rate of 105.50 INR per GBP
+* A normalized two-table SQLite database
+* Six SQL queries covering the required SQL operations
+* SQL JOIN verification using pandas
 
 The module demonstrates web scraping, data cleaning, relational database design, SQL querying, and pandas-based verification.
-<!-- Feature branch verification -->
+
+All Module 1 requirements were tested locally, and the final database and cleaned CSV artifacts are included in the repository.
