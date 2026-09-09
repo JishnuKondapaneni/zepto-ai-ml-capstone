@@ -14,3 +14,4 @@ chromadb
 fastapi
 uvicorn
 pydantic
+openai
