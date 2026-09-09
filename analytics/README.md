@@ -1,269 +1,297 @@
-# Module 2 — Titanic Analytics and Machine Learning
+# Analytics Module
 
-## 1. Dataset Loading and Export
+This module performs exploratory data analysis, preprocessing, classification modeling, and regression modeling on the Titanic dataset.
 
-The Titanic dataset was loaded using `sns.load_dataset("titanic")`.
+## 1. Dataset Loading
 
-The dataset was immediately exported to:
+The Titanic dataset is loaded using Seaborn exactly once in `titanic_data.py`:
 
-`analytics/titanic.csv`
+```python
+sns.load_dataset("titanic")
+```
 
-All downstream analysis uses the local CSV file.
+Immediately after loading, the dataset is saved as:
 
-Original dataset:
+```text
+analytics/titanic.csv
+```
 
-- Rows: 891
-- Columns: 15
+All downstream analysis reads from the saved CSV rather than repeatedly downloading/loading the dataset.
 
-Cleaned dataset:
+Dataset size:
 
-- Rows: 889
-- Columns: 14
-
----
-
-## 2. Missing-Value Treatment
-
-Missing values were handled according to the required percentage thresholds.
-
-| Column | Missing Values | Treatment |
-|---|---:|---|
-| age | 177 | Median imputation |
-| embarked | 2 | Rows dropped |
-| deck | 688 | Column dropped |
-| embark_town | 2 | Rows dropped |
-
-### Explanation
-
-`age` had approximately 19.87% missing values, which is within the 5–30% range. Therefore, missing ages were replaced using the median age of 28.0.
-
-`embarked` and `embark_town` each had approximately 0.22% missing values, which is below 5%, so the affected rows were removed.
-
-`deck` had approximately 77.22% missing values. Since more than 30% of its values were missing, the column was dropped. This avoids unreliable large-scale imputation.
-
-After preprocessing, the cleaned dataset contains no missing values.
+* Rows: 891
+* Columns: 15
 
 ---
 
-# 3. Univariate Analysis
+## 2. Missing Value Analysis and Preprocessing
 
-## Age Distribution
+Missing values in the original Titanic dataset were handled according to the assignment thresholds.
 
-The age histogram shows that passenger ages are concentrated mainly around young-adult and middle-aged groups.
+| Column      | Missing | Percentage | Action            |
+| ----------- | ------: | ---------: | ----------------- |
+| age         |     177 |     19.87% | Median imputation |
+| embarked    |       2 |      0.22% | Drop rows         |
+| deck        |     688 |     77.22% | Drop column       |
+| embark_town |       2 |      0.22% | Drop rows         |
 
-The age boxplot identifies:
+The `age` column has between 5% and 30% missing values, so missing ages were replaced with the median value of 28.0.
 
-- Q1 = 22.0
-- Q3 = 35.0
-- IQR = 13.0
-- Lower bound = 2.5
-- Upper bound = 54.5
-- IQR outliers = 65
+The `embarked` and `embark_town` columns each have less than 5% missing values, so their affected rows were removed.
 
-The outliers above the upper IQR boundary represent passengers considerably older than the central age range.
+The `deck` column has more than 30% missing values. It was therefore removed because retaining it would require extensive imputation and could introduce substantial artificial information.
 
-## Fare Distribution
+After preprocessing, the cleaned dataset contains 889 rows and 14 columns with no remaining missing values.
 
-The fare histogram is strongly right-skewed. Most passengers paid relatively low fares, while a smaller number paid substantially higher fares.
+The cleaned dataset is saved as:
 
-The fare boxplot identifies:
-
-- Q1 = 7.8958
-- Q3 = 31.0
-- IQR = 23.1042
-- Lower bound = -26.7605
-- Upper bound = 65.6563
-- IQR outliers = 114
-
-The negative lower bound is only the calculated IQR boundary; actual fares are not negative.
-
-### Fare Mean, Median and Mode
-
-- Mean = 32.0967
-- Median = 14.4542
-- Mode = 8.0500
-
-The mean is considerably greater than the median because the fare distribution is positively skewed. A relatively small number of very expensive tickets creates a long right tail and pulls the mean upward.
+```text
+analytics/titanic_cleaned.csv
+```
 
 ---
 
-# 4. Bivariate Analysis
+## 3. Univariate Analysis
 
-## Survival by Sex
+### Age
 
-| Sex | Survival Rate |
-|---|---:|
-| Female | 74.04% |
-| Male | 18.89% |
+An age histogram and box plot were generated.
 
-Female passengers had a substantially higher survival rate than male passengers.
+The IQR method identified 65 potential age outliers. These observations were retained because they are valid passenger ages rather than obvious data-entry errors.
 
-This indicates that sex was strongly associated with survival in the Titanic dataset.
+### Fare
 
-## Survival by Passenger Class
+A fare histogram and box plot were generated.
 
-| Passenger Class | Survival Rate |
-|---|---:|
-| 1 | 62.62% |
-| 2 | 47.28% |
-| 3 | 24.24% |
+The IQR method identified 114 potential fare outliers. These observations were also retained because unusually expensive tickets are plausible in the Titanic dataset.
 
-First-class passengers had the highest survival rate, while third-class passengers had the lowest.
+Fare summary statistics:
 
-This suggests passenger class was an important factor associated with survival.
+| Statistic |    Fare |
+| --------- | ------: |
+| Mean      | 32.0967 |
+| Median    | 14.4542 |
+| Mode      |    8.05 |
 
-## Survival by Sex and Passenger Class
+The fare distribution is strongly right-skewed because most passengers paid relatively low fares while a smaller number paid substantially higher fares. This causes the mean to be considerably larger than the median.
 
-| Sex | Class | Survival Rate |
-|---|---:|---:|
-| Female | 1 | 96.74% |
-| Female | 2 | 92.11% |
-| Female | 3 | 50.00% |
-| Male | 1 | 36.89% |
-| Male | 2 | 15.74% |
-| Male | 3 | 13.54% |
+Generated plots:
 
-The combination of sex and passenger class provides more detail than either variable alone.
-
-Female first- and second-class passengers had particularly high survival rates, while male second- and third-class passengers had substantially lower survival rates.
+```text
+analytics/age_histogram.png
+analytics/age_boxplot.png
+analytics/fare_histogram.png
+analytics/fare_boxplot.png
+```
 
 ---
 
-# 5. Correlation Analysis
+## 4. Bivariate Analysis
 
-The required correlation matrix uses exactly these six variables:
+Survival was analyzed by:
 
-- survived
-- pclass
-- age
-- sibsp
-- parch
-- fare
+* Sex
+* Passenger class
+* Sex and passenger class together
 
-The two strongest absolute off-diagonal correlations are:
+The analysis shows substantial differences in survival between passenger groups. Female passengers generally had higher survival rates than male passengers, while passengers in higher classes generally had better survival outcomes.
 
-### 1. Passenger Class and Fare
+A 6x6 Pearson correlation matrix was calculated using exactly these variables:
 
-Correlation:
+```text
+survived
+pclass
+age
+sibsp
+parch
+fare
+```
 
-`-0.5482`
+The two strongest absolute off-diagonal correlations were:
 
-This negative relationship occurs because passenger class is numerically encoded with smaller numbers representing higher classes. Higher-class passengers generally paid higher fares.
+| Variables       | Correlation |
+| --------------- | ----------: |
+| pclass and fare |     -0.5482 |
+| sibsp and parch |      0.4145 |
 
-### 2. SibSp and Parch
+The negative `pclass`-`fare` relationship occurs because lower numerical passenger-class values represent higher classes, which generally had more expensive fares.
 
-Correlation:
+The positive `sibsp`-`parch` relationship indicates that passengers traveling with siblings/spouses were also somewhat more likely to travel with parents/children.
 
-`+0.4145`
+Generated plots:
 
-This positive relationship indicates that passengers traveling with siblings/spouses were somewhat more likely to also travel with parents/children.
-
-Correlation does not establish causation; it only describes the strength and direction of a linear relationship.
-
----
-
-# 6. Multivariate Analysis
-
-Four distinct multivariate visualizations were created:
-
-1. Survival heatmap
-2. Age vs. fare with survival information
-3. Passenger class vs. fare with survival information
-4. Family-size survival analysis
-
-### Interpretation
-
-The multivariate visualizations show that survival was influenced by combinations of passenger characteristics rather than by a single variable.
-
-Sex and passenger class together reveal substantially different survival patterns. Fare also varies strongly across passenger classes, while family-related variables provide additional information about passenger circumstances.
-
-The combined visualizations therefore provide more detailed insight than examining each variable independently.
+```text
+analytics/survival_by_sex.png
+analytics/survival_by_pclass.png
+analytics/survival_by_sex_pclass.png
+analytics/correlation_heatmap.png
+```
 
 ---
 
-# 7. Z-Score Standardization
+## 5. Multivariate Analysis
+
+Four distinct multivariate visualizations were produced.
+
+### Chart 1: Survival by Sex and Passenger Class
+
+This chart combines two important passenger characteristics and shows that survival varied substantially by both sex and passenger class. Female passengers generally had better survival outcomes than males across passenger classes. The combination demonstrates that survival cannot be explained by sex or class independently.
+
+### Chart 2: Age and Fare by Survival
+
+This visualization compares age and fare distributions for survivors and non-survivors. Fare shows noticeable differences between the groups, while age distributions overlap considerably. This suggests that fare-related passenger characteristics may contain more direct predictive information than age alone.
+
+### Chart 3: Survival by Sex and Class
+
+The grouped visualization makes the interaction between sex and passenger class more visible. Female passengers in higher classes had particularly strong survival outcomes, while male passengers generally had lower survival rates. The chart demonstrates why combining multiple categorical variables can provide more useful insight than examining either variable independently.
+
+### Chart 4: Multivariate Correlation Heatmap
+
+The heatmap summarizes relationships among survived, pclass, age, sibsp, parch, and fare simultaneously. The strongest relationship is the negative correlation between passenger class and fare, followed by the positive relationship between siblings/spouses and parents/children. Survival also has meaningful relationships with passenger class and fare, supporting their inclusion in classification models.
+
+Generated multivariate plots:
+
+```text
+analytics/multivariate_survival_sex_class.png
+analytics/multivariate_age_fare_survival.png
+analytics/multivariate_survival_sex_pclass.png
+analytics/multivariate_correlation.png
+```
+
+---
+
+## 6. Z-Score Standardization
 
 Age and fare were standardized using z-score standardization.
 
-### Before Standardization
+Before standardization:
 
-| Variable | Mean | Standard Deviation |
-|---|---:|---:|
-| Age | 29.3152 | 12.9849 |
-| Fare | 32.0967 | 49.6975 |
+| Variable |    Mean | Standard Deviation |
+| -------- | ------: | -----------------: |
+| age      | 29.3152 |            12.9849 |
+| fare     | 32.0967 |            49.6975 |
 
-### After Standardization
+After standardization, the population means were approximately zero and the population standard deviations were approximately one.
 
-| Variable | Mean | Standard Deviation |
-|---|---:|---:|
-| Age | approximately 0 | approximately 1 |
-| Fare | approximately 0 | approximately 1 |
+The pandas sample standard deviation is approximately 1.0006 because pandas uses `ddof=1`, while the standardization transformation uses the population standard deviation convention.
 
-The verification used population standard deviation (`ddof=0`) and confirmed that both standardized variables have mean approximately 0 and standard deviation 1.
-
-Standardization puts variables with different numerical scales onto a comparable scale. This is particularly useful for models such as logistic regression.
+This confirms that the z-score transformation was applied correctly.
 
 ---
 
-# 8. Classification Modeling
+# 7. Classification Modeling
 
-The target variable is:
+The classification target is:
 
-`survived`
+```text
+survived
+```
 
-The data was split using a stratified 80/20 train-test split so that the survival-class proportions were preserved.
+The `alive` column was removed to prevent target leakage because it directly represents the survival outcome.
+
+A stratified train/test split was used with:
+
+```text
+test_size = 0.20
+random_state = 42
+```
 
 Preprocessing was implemented using a leakage-free `ColumnTransformer` and `Pipeline`.
 
-Numeric features were processed using:
+Numerical features:
 
-- Median imputation
-- StandardScaler
+```text
+age
+sibsp
+parch
+fare
+```
 
-Categorical features were processed using:
+Numerical preprocessing:
 
-- Most-frequent imputation
-- One-hot encoding
+```text
+median imputation
+StandardScaler
+```
 
-The `alive` column was removed because it directly represents survival and would cause target leakage.
+Categorical features:
 
-## Classification Results
+```text
+sex
+embarked
+class
+who
+adult_male
+embark_town
+alone
+```
 
-| Model | Accuracy | Precision | Recall | F1 | ROC-AUC |
-|---|---:|---:|---:|---:|---:|
-| Logistic Regression | 0.8146 | 0.7966 | 0.6912 | 0.7402 | 0.8680 |
-| Logistic Regression Balanced | **0.8315** | 0.7879 | **0.7647** | **0.7761** | 0.8674 |
-| Logistic Regression + SMOTE | 0.8258 | 0.7937 | 0.7353 | 0.7634 | 0.8678 |
-| Decision Tree | 0.7921 | 0.8163 | 0.5882 | 0.6838 | 0.8248 |
-| Random Forest | 0.7865 | 0.7344 | 0.6912 | 0.7121 | 0.8146 |
+Categorical preprocessing:
 
-### Interpretation
+```text
+most-frequent imputation
+OneHotEncoder
+```
 
-The balanced Logistic Regression model produced the strongest held-out test performance among the evaluated classifiers.
-
-It achieved:
-
-- Accuracy = 0.8315
-- Precision = 0.7879
-- Recall = 0.7647
-- F1 = 0.7761
-- ROC-AUC = 0.8674
-
-Using `class_weight="balanced"` improved recall and F1 compared with the unbalanced Logistic Regression model.
-
-SMOTE was also tested, with oversampling performed only within the training pipeline to prevent data leakage.
+All preprocessing steps were fitted only on the training data through the pipeline.
 
 ---
 
-# 9. Random Forest Grid Search
+## 8. Classification Results
 
-GridSearchCV was used to tune the Random Forest.
+| Model                             |   Accuracy | Precision |     Recall |         F1 | ROC-AUC |
+| --------------------------------- | ---------: | --------: | ---------: | ---------: | ------: |
+| Logistic Regression - Baseline    |     0.8146 |    0.7966 |     0.6912 |     0.7402 |  0.8680 |
+| Logistic Regression - Balanced    | **0.8315** |    0.7879 | **0.7647** | **0.7761** |  0.8674 |
+| Logistic Regression - SMOTE       |     0.8258 |    0.7937 |     0.7353 |     0.7634 |  0.8678 |
+| Decision Tree                     |     0.7921 |    0.8163 |     0.5882 |     0.6838 |  0.8248 |
+| Random Forest                     |     0.7865 |    0.7344 |     0.6912 |     0.7121 |  0.8146 |
+| Random Forest - GridSearchCV Best |     0.7921 |    0.7719 |     0.6471 |     0.7040 |  0.8128 |
 
-The parameters searched were:
+The balanced Logistic Regression model achieved the best held-out accuracy and F1 score among the evaluated classifiers.
 
-- `n_estimators`
-- `max_depth`
-- `max_features`
+---
+
+## 9. Confusion Matrix and ROC Curves
+
+Confusion matrices were generated for all evaluated classification models.
+
+ROC curves were generated using the test-set probabilities and `roc_curve`, with ROC-AUC reported for each classifier.
+
+Generated ROC plots:
+
+```text
+analytics/roc_curve_logistic_regression___baseline.png
+analytics/roc_curve_logistic_regression___balanced.png
+analytics/roc_curve_logistic_regression___smote.png
+analytics/roc_curve_decision_tree.png
+analytics/roc_curve_random_forest.png
+analytics/roc_curve_random_forest___gridsearchcv_best.png
+```
+
+The ROC-AUC values show that the logistic regression models provided the strongest ranking performance, with the baseline Logistic Regression reaching an AUC of 0.8680.
+
+---
+
+## 10. Random Forest GridSearchCV
+
+Random Forest hyperparameters were tuned using `GridSearchCV`.
+
+Search parameters:
+
+```text
+n_estimators: [100, 200]
+max_depth: [None, 5, 10]
+max_features: [sqrt, log2]
+```
+
+The search used:
+
+```text
+5-fold StratifiedKFold
+scoring = f1
+```
 
 The best parameters were:
 
@@ -271,112 +299,213 @@ The best parameters were:
 n_estimators = 200
 max_depth = 10
 max_features = sqrt
+```
 
+Best cross-validation F1:
 
-Best cross-validation F1 score:
-
+```text
 0.7593
+```
 
-The optimized Random Forest achieved on the test set:
+The best GridSearchCV Random Forest achieved an independent test F1 score of 0.7040 and accuracy of 0.7921.
 
-Accuracy = 0.7921
-Precision = 0.7719
-Recall = 0.6471
-F1 = 0.7040
-ROC-AUC = 0.8128
-OOB score = 0.8214
+The final GridSearchCV Random Forest estimator used:
 
-The GridSearchCV result is based on cross-validation F1, while the final comparison uses the independent test set. Therefore, the tuned Random Forest did not outperform the balanced Logistic Regression on the held-out test data.
+```python
+oob_score=True
+```
 
-10. Fare Regression
+Its out-of-bag score was:
 
-A multivariate Linear Regression model was created to predict passenger fare.
+```text
+0.8214
+```
 
-The target variable was:
+---
 
+## 11. Imbalance Handling
+
+Three approaches were compared:
+
+1. Logistic Regression baseline
+2. Logistic Regression with `class_weight="balanced"`
+3. Logistic Regression with SMOTE applied only to the training fold
+
+The balanced Logistic Regression model produced the strongest held-out F1 score of 0.7761 and recall of 0.7647.
+
+SMOTE also improved recall compared with the baseline, but its F1 score of 0.7634 was lower than the balanced Logistic Regression result.
+
+---
+
+# 12. Regression Modeling
+
+A multivariate Linear Regression model was used to predict:
+
+```text
 fare
+```
 
-The target was excluded from the input features, and alive was also removed to avoid leakage.
+The regression pipeline includes preprocessing and the estimator so that transformations are learned only from the training data.
 
-The model used both numerical and categorical predictors with preprocessing contained inside a pipeline.
+Test-set metrics:
 
-Regression Results
-Metric	Result
-MAE	18.3735
-RMSE	41.2921
-R²	0.3609
-Adjusted R²	0.2655
+| Metric      |   Value |
+| ----------- | ------: |
+| MAE         | 18.3735 |
+| RMSE        | 41.2921 |
+| R²          |  0.3609 |
+| Adjusted R² |  0.2655 |
 
-The R² value of approximately 0.36 means that the model explains a meaningful but limited portion of the variation in passenger fares.
+The R² value of 0.3609 indicates that the model explains approximately 36.09% of the variation in fare on the test data.
 
-The difference between R² and adjusted R² reflects the adjustment for the number of predictors in the model.
+The difference between R² and adjusted R² reflects the penalty applied for the number of predictors in the model.
 
-A residual plot was also created to inspect heteroscedasticity. The spread of residuals is not completely constant across predicted fare values, indicating that the linear regression assumptions are not perfectly satisfied.
+The residual analysis indicates some heteroscedasticity, meaning that residual variability is not completely constant across predicted fare values.
 
-11. Saved Regression Pipeline
+Generated plot:
 
-The complete preprocessing and regression model were saved using joblib.
+```text
+analytics/fare_regression_residuals.png
+```
 
-Saved file:
+---
+
+# 13. Final Model Comparison
+
+## Classification Metrics
+
+| Model                             |   Accuracy | Precision |     Recall |         F1 | ROC-AUC |
+| --------------------------------- | ---------: | --------: | ---------: | ---------: | ------: |
+| Logistic Regression - Baseline    |     0.8146 |    0.7966 |     0.6912 |     0.7402 |  0.8680 |
+| Logistic Regression - Balanced    | **0.8315** |    0.7879 | **0.7647** | **0.7761** |  0.8674 |
+| Logistic Regression - SMOTE       |     0.8258 |    0.7937 |     0.7353 |     0.7634 |  0.8678 |
+| Decision Tree                     |     0.7921 |    0.8163 |     0.5882 |     0.6838 |  0.8248 |
+| Random Forest                     |     0.7865 |    0.7344 |     0.6912 |     0.7121 |  0.8146 |
+| Random Forest - GridSearchCV Best |     0.7921 |    0.7719 |     0.6471 |     0.7040 |  0.8128 |
+
+## Regression Metrics
+
+| Model                          |     MAE |    RMSE |     R² | Adjusted R² |
+| ------------------------------ | ------: | ------: | -----: | ----------: |
+| Multivariate Linear Regression | 18.3735 | 41.2921 | 0.3609 |      0.2655 |
+
+---
+
+# 14. Final Recommendation
+
+The recommended classification model is Logistic Regression with `class_weight="balanced"`, because it achieved the highest held-out accuracy of 0.8315 and the highest F1 score of 0.7761 among the evaluated classifiers. It also achieved a strong ROC-AUC of 0.8674 and recall of 0.7647, making it a good choice when correctly identifying survivors is important. The Random Forest GridSearchCV model achieved an OOB score of 0.8214, but its independent test F1 of 0.7040 and accuracy of 0.7921 were lower than the balanced Logistic Regression results. For fare prediction, the Linear Regression model achieved MAE = 18.3735, RMSE = 41.2921, and R² = 0.3609, indicating useful but limited predictive power and some residual heteroscedasticity.
+
+---
+
+# 15. Saved Model Artifacts
+
+The best-performing classification pipeline is saved as:
+
+analytics/best_classification_pipeline.joblib
+
+This is the balanced Logistic Regression model selected from the evaluated
+classification models.
+
+The saved classification pipeline contains both preprocessing and the
+Logistic Regression estimator, allowing raw input data to be passed directly
+after reloading.
+
+The pipeline was reloaded with joblib and verified using raw test-set input.
+The verification successfully produced a binary prediction and survival
+probability.
+
+The fare regression pipeline is also saved as:
 
 analytics/fare_regression_pipeline.joblib
 
-The saved pipeline was loaded back successfully and tested using raw feature data.
+The regression pipeline contains preprocessing and the regression estimator
+and was similarly reloaded and verified with raw input.---
 
-The loaded pipeline successfully produced a fare prediction:
+# 16. Main Analytics Files
 
-Predicted fare: 2.0292
-
-This confirms that the saved artifact contains the preprocessing and model components required to transform raw input and generate a prediction.
-
-12. Generated Analysis Files
-
-The analytics module generates the following important files:
-
+```text
 analytics/
+├── README.md
+├── titanic_data.py
+├── preprocess.py
+├── univariate_analysis.py
+├── bivariate_analysis.py
+├── multivariate_analysis.py
+├── classification.py
+├── regression.py
+├── save_regression_model.py
 ├── titanic.csv
 ├── titanic_cleaned.csv
-├── classification_results.csv
-├── random_forest_gridsearch_results.csv
-├── regression_results.csv
 ├── fare_regression_pipeline.joblib
-└── plots/
-    ├── age_histogram.png
-    ├── age_boxplot.png
-    ├── fare_histogram.png
-    ├── fare_boxplot.png
-    ├── survival_by_sex.png
-    ├── survival_by_class.png
-    ├── survival_by_sex_and_class.png
-    ├── correlation_matrix.png
-    ├── multivariate_survival_heatmap.png
-    ├── multivariate_age_fare_survival.png
-    ├── multivariate_class_fare_survival.png
-    ├── multivariate_family_survival.png
-    ├── decision_tree.png
-    ├── confusion_matrix_logistic_baseline.png
-    ├── confusion_matrix_logistic_balanced.png
-    ├── confusion_matrix_logistic_smote.png
-    ├── confusion_matrix_decision_tree.png
-    ├── confusion_matrix_random_forest.png
-    ├── confusion_matrix_random_forest_gridsearch.png
-    └── fare_residuals_heteroscedasticity.png
-Module 2 Conclusion
+└── generated PNG charts
+```
 
-The Titanic analysis demonstrates a complete analytics workflow:
+---
 
-Dataset acquisition and local export
-Missing-value treatment
-Univariate analysis
-Bivariate analysis
-Correlation analysis
-Multivariate visualization
-Feature standardization
-Leakage-free classification modeling
-Imbalance handling
-Random Forest hyperparameter tuning
-Fare regression
-Residual analysis
-Joblib model persistence and verification
+# 17. How to Run
 
-The balanced Logistic Regression model provided the strongest held-out classification performance among the tested classifiers, while the Linear Regression model provided a baseline multivariate approach for predicting fare.
+From the repository root, activate the virtual environment:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+Run the dataset loading step:
+
+```powershell
+python .\analytics\titanic_data.py
+```
+
+Run preprocessing:
+
+```powershell
+python .\analytics\preprocess.py
+```
+
+Run univariate analysis:
+
+```powershell
+python .\analytics\univariate_analysis.py
+```
+
+Run bivariate analysis:
+
+```powershell
+python .\analytics\bivariate_analysis.py
+```
+
+Run multivariate analysis:
+
+```powershell
+python .\analytics\multivariate_analysis.py
+```
+
+Run classification:
+
+```powershell
+python .\analytics\classification.py
+```
+
+Run regression:
+
+```powershell
+python .\analytics\regression.py
+```
+
+Save and verify the regression pipeline:
+
+```powershell
+python .\analytics\save_regression_model.py
+```
+
+---
+
+# 18. Conclusion
+
+The analytics module provides a complete workflow from dataset acquisition and cleaning through exploratory analysis, classification, regression, evaluation, and model persistence.
+
+The analysis demonstrates that passenger sex and class are important survival-related variables, while fare has a substantial relationship with passenger class.
+
+Among the evaluated classification models, balanced Logistic Regression provides the strongest held-out performance.
+
+The fare regression model provides useful predictive information but explains only part of the observed fare variation, so its predictions should be interpreted with appropriate caution.

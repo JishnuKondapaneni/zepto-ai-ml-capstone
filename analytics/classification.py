@@ -9,6 +9,7 @@ Requirements:
 - Random Forest.
 - Confusion matrix.
 - Accuracy, precision, recall, F1, ROC-AUC.
+- ROC curve.
 - Compare:
     1. Normal baseline
     2. class_weight='balanced'
@@ -48,6 +49,7 @@ from sklearn.metrics import (
     precision_score,
     recall_score,
     roc_auc_score,
+    roc_curve,
 )
 from sklearn.model_selection import (
     GridSearchCV,
@@ -186,7 +188,9 @@ def evaluate_model(
         - F1
         - ROC-AUC
 
-    Also creates and saves a confusion matrix.
+    Also creates and saves:
+        - Confusion matrix
+        - ROC curve
     """
 
     predictions = model.predict(
@@ -220,6 +224,19 @@ def evaluate_model(
     roc_auc = roc_auc_score(
         y_test,
         probabilities,
+    )
+
+    # --------------------------------------------------------
+    # Safe filename
+    # --------------------------------------------------------
+
+    safe_name = (
+        model_name
+        .lower()
+        .replace(" ", "_")
+        .replace("=", "")
+        .replace("'", "")
+        .replace("-", "_")
     )
 
     print(
@@ -298,15 +315,6 @@ def evaluate_model(
 
     plt.tight_layout()
 
-    safe_name = (
-        model_name
-        .lower()
-        .replace(" ", "_")
-        .replace("=", "")
-        .replace("'", "")
-        .replace("-", "_")
-    )
-
     output_file = (
         PLOTS_DIR
         / f"confusion_matrix_{safe_name}.png"
@@ -323,7 +331,68 @@ def evaluate_model(
     )
 
     print(
-        f"Saved: {output_file}"
+        f"Saved confusion matrix: {output_file}"
+    )
+
+    # --------------------------------------------------------
+    # ROC curve
+    # --------------------------------------------------------
+
+    false_positive_rate, true_positive_rate, _ = roc_curve(
+        y_test,
+        probabilities,
+    )
+
+    plt.figure(
+        figsize=(8, 6)
+    )
+
+    plt.plot(
+        false_positive_rate,
+        true_positive_rate,
+        label=f"ROC curve (AUC = {roc_auc:.4f})",
+    )
+
+    plt.plot(
+        [0, 1],
+        [0, 1],
+        linestyle="--",
+        label="Random classifier",
+    )
+
+    plt.xlabel(
+        "False Positive Rate"
+    )
+
+    plt.ylabel(
+        "True Positive Rate"
+    )
+
+    plt.title(
+        f"ROC Curve - {model_name}"
+    )
+
+    plt.legend()
+
+    plt.tight_layout()
+
+    roc_output_file = (
+        PLOTS_DIR
+        / f"roc_curve_{safe_name}.png"
+    )
+
+    plt.savefig(
+        roc_output_file,
+        dpi=150,
+        bbox_inches="tight",
+    )
+
+    plt.close(
+        "all"
+    )
+
+    print(
+        f"Saved ROC curve: {roc_output_file}"
     )
 
     return {
