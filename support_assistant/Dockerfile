@@ -8,6 +8,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY support_assistant ./support_assistant
 
+# Build the local ChromaDB policy index into the image.
+RUN python -m support_assistant.ingest
+
 ENV MOCK_LLM=1
 
 EXPOSE 7860
