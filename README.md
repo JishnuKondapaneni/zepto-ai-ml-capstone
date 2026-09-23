@@ -610,7 +610,7 @@ http://127.0.0.1:7860/docs
 Build the image:
 
 ```powershell
-docker build -t zepto-support-assistant ./support_assistant
+docker build -t zepto-support-assistant -f support_assistant/Dockerfile .
 ```
 
 Run the container:

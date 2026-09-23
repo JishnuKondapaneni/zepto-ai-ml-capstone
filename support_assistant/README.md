@@ -44,10 +44,10 @@ Policy query:
 {"query":"How long does delivery take?"}
 ```
 
-Typical mock response (the answer text is the retrieved top chunk, truncated to 300 characters):
+Response shape for mock mode (illustrative placeholders, not a recorded runtime response): retrieval requests the top three chunks; `sources` contains the `document_id` for each chunk actually returned. The mock answer is the first 300 characters of the top chunk, prefixed as shown. The exact retrieved IDs and text could not be verified here because the embedding model was unavailable.
 
 ```json
-{"answer":"Based on the retrieved context: Zepto delivers grocery and household essentials to serviceable pin codes within 10 to 30 minutes of order confirmation, depending on the customer's delivery zone and current order volume. Standard delivery is free on orders over INR 149; orders below this threshold incur a flat INR 25 delivery fee.","sources":["doc_01"],"confidence":1.0}
+{"answer":"Based on the retrieved context: <first 300 characters of the top retrieved chunk>","sources":["<document_id from retrieved chunk 1>","<document_id from retrieved chunk 2>","<document_id from retrieved chunk 3>"],"confidence":1.0}
 ```
 
 General query:
