@@ -12,6 +12,10 @@ Requirements:
 
 from pathlib import Path
 
+import matplotlib
+
+matplotlib.use("Agg")
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
@@ -36,33 +40,46 @@ CORRELATION_COLUMNS = [
 
 def survival_by_sex(df: pd.DataFrame) -> pd.DataFrame:
     """Calculate survival rate by sex."""
-
-    result = df.groupby("sex")["survived"].mean().reset_index()
-
+    rows = []
+    for sex in sorted(df["sex"].dropna().unique()):
+        mask = df["sex"] == sex
+        group = df.loc[mask, "survived"]
+        rows.append({"sex": sex, "survived": group.mean()})
+    result = pd.DataFrame(rows)
     result["survival_rate_percent"] = result["survived"] * 100
-
     return result
 
 
 def survival_by_class(df: pd.DataFrame) -> pd.DataFrame:
     """Calculate survival rate by passenger class."""
 
-    result = df.groupby("pclass")["survived"].mean().reset_index()
-
+    rows = []
+    for pclass in sorted(df["pclass"].dropna().unique()):
+        mask = df["pclass"] == pclass
+        group = df.loc[mask, "survived"]
+        rows.append({"pclass": pclass, "survived": group.mean()})
+    result = pd.DataFrame(rows)
     result["survival_rate_percent"] = result["survived"] * 100
-
     return result
 
 
 def survival_by_sex_and_class(df: pd.DataFrame) -> pd.DataFrame:
     """Calculate survival rate by sex and passenger class."""
 
-    result = (
-        df.groupby(["sex", "pclass"])["survived"]
-        .mean()
-        .reset_index()
-    )
-
+    rows = []
+    for sex in sorted(df["sex"].dropna().unique()):
+        for pclass in sorted(df["pclass"].dropna().unique()):
+            mask = (df["sex"] == sex) & (df["pclass"] == pclass)
+            group = df.loc[mask, "survived"]
+            if not group.empty:
+                rows.append(
+                    {
+                        "sex": sex,
+                        "pclass": pclass,
+                        "survived": group.mean(),
+                    }
+                )
+    result = pd.DataFrame(rows)
     result["survival_rate_percent"] = result["survived"] * 100
 
     return result

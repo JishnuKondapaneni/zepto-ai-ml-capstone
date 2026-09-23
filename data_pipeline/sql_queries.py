@@ -5,15 +5,18 @@ Step 6: Required SQL queries and pandas verification.
 """
 
 import sqlite3
+from pathlib import Path
 
 import pandas as pd
 
 
-DATABASE_FILE = "data_pipeline/books.db"
+DATA_DIR = Path(__file__).resolve().parent
+DATABASE_FILE = DATA_DIR / "books.db"
+RESULTS_FILE = DATA_DIR / "sql_query_results.txt"
 
 
-def run_query(connection, query, query_name):
-    """Run a SQL query using pandas and display the result."""
+def run_query(connection, query, query_name, output_file):
+    """Run a SQL query, display it, and persist its statement and rows."""
 
     print()
     print("=" * 60)
@@ -24,6 +27,14 @@ def run_query(connection, query, query_name):
 
     print(result.to_string(index=False))
 
+    with output_file.open("a", encoding="utf-8") as file:
+        file.write(f"{query_name}\n")
+        file.write("=" * 60 + "\n")
+        file.write("SQL statement:\n")
+        file.write(query.strip() + "\n\n")
+        file.write("Result rows:\n")
+        file.write(result.to_string(index=False) + "\n\n")
+
     return result
 
 
@@ -31,6 +42,10 @@ def main():
     """Run all required SQL queries."""
 
     connection = sqlite3.connect(DATABASE_FILE)
+    RESULTS_FILE.write_text(
+        "SQL query results\n" + "=" * 60 + "\n\n",
+        encoding="utf-8",
+    )
 
     # ---------------------------------------------------------
     # Query 1: SELECT + WHERE
@@ -47,7 +62,8 @@ def main():
     result_1 = run_query(
         connection,
         query_1,
-        "QUERY 1 - SELECT + WHERE"
+        "QUERY 1 - SELECT + WHERE",
+        RESULTS_FILE,
     )
 
     # ---------------------------------------------------------
@@ -65,7 +81,8 @@ def main():
     result_2 = run_query(
         connection,
         query_2,
-        "QUERY 2 - ORDER BY + LIMIT"
+        "QUERY 2 - ORDER BY + LIMIT",
+        RESULTS_FILE,
     )
 
     # ---------------------------------------------------------
@@ -82,7 +99,8 @@ def main():
     result_3 = run_query(
         connection,
         query_3,
-        "QUERY 3 - DISTINCT"
+        "QUERY 3 - DISTINCT",
+        RESULTS_FILE,
     )
 
     # ---------------------------------------------------------
@@ -100,7 +118,8 @@ def main():
     result_4 = run_query(
         connection,
         query_4,
-        "QUERY 4 - BETWEEN"
+        "QUERY 4 - BETWEEN",
+        RESULTS_FILE,
     )
 
     # ---------------------------------------------------------
@@ -122,7 +141,8 @@ def main():
     result_5 = run_query(
         connection,
         query_5,
-        "QUERY 5 - IN"
+        "QUERY 5 - IN",
+        RESULTS_FILE,
     )
 
     # ---------------------------------------------------------
@@ -147,7 +167,8 @@ def main():
     result_6 = run_query(
         connection,
         query_6,
-        "QUERY 6 - JOIN"
+        "QUERY 6 - JOIN",
+        RESULTS_FILE,
     )
 
     # ---------------------------------------------------------

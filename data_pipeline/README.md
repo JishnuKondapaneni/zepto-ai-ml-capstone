@@ -353,6 +353,7 @@ data_pipeline/
 |-- database.py
 |-- verify_database.py
 |-- sql_queries.py
+|-- sql_query_results.txt
 |-- cleaned_books.csv
 |-- books.db
 `-- README.md
@@ -372,7 +373,7 @@ Checks the database tables, categories, sample records, and total book count.
 
 ### sql_queries.py
 
-Runs the required SQL queries and verifies the SQL JOIN against a pandas merge.
+Runs the required SQL queries, saves each query name, SQL statement, and result rows to `data_pipeline/sql_query_results.txt`, and verifies the SQL JOIN against a pandas merge. The results file is regenerated each time the script runs.
 
 ### cleaned_books.csv
 

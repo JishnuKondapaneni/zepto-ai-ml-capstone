@@ -78,17 +78,17 @@ def retrieve_and_answer(state: SupportState) -> dict:
         retrieved_context=context,
     )
 
-    answer = generate_real_llm_answer(prompt)
+    response = generate_real_llm_answer(prompt)
 
     return {
         "retrieved_chunks": chunks,
-        "answer": answer,
-        "sources": sources,
-        "confidence": 1.0,
+        "answer": response["answer"],
+        "sources": response["sources"],
+        "confidence": response["confidence"],
     }
 
 
-def generate_real_llm_answer(prompt: str) -> str:
+def generate_real_llm_answer(prompt: str) -> dict:
     """
     Optional real LLM generation.
 
@@ -147,7 +147,11 @@ def generate_real_llm_answer(prompt: str) -> str:
             if parsed is None:
                 raise ValueError("The LLM returned no structured response.")
 
-            return parsed.answer
+            return {
+                "answer": parsed.answer,
+                "sources": parsed.sources,
+                "confidence": parsed.confidence,
+            }
 
         except Exception as exc:
             last_error = exc

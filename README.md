@@ -4,7 +4,7 @@ This repository contains three independent modules completed for the Zepto AI/ML
 
 1. `data_pipeline` - web scraping, cleaning, SQLite database design, and SQL/Pandas verification.
 2. `analytics` - Titanic exploratory analysis, classification, regression, model evaluation, and saved ML pipelines.
-3. `support_assistant` - retrieval-augmented customer support assistant using local embeddings, ChromaDB, LangGraph, FastAPI, and an optional OpenRouter LLM path.
+3. `support_assistant` - retrieval-augmented customer support assistant using local embeddings, ChromaDB, LangGraph, FastAPI, and an optional OpenAI structured-output LLM path.
 
 All modules can be run locally with Python. No paid services are required.
 
@@ -18,6 +18,7 @@ zepto-ai-ml-capstone/
 |   +-- database.py
 |   +-- verify_database.py
 |   +-- sql_queries.py
+|   +-- sql_query_results.txt
 |   +-- cleaned_books.csv
 |   +-- books.db
 |   +-- README.md
@@ -173,7 +174,7 @@ Six SQL queries are included and cover:
 * IN and BETWEEN
 * JOIN
 
-The JOIN result is also reproduced using `pd.merge`.
+Each query's name, SQL statement, and output rows are saved to `data_pipeline/sql_query_results.txt`. The JOIN result is also reproduced using `pd.merge`.
 
 The SQL JOIN and Pandas merge both return 62 rows and are verified as equivalent.
 
@@ -456,7 +457,7 @@ It uses:
 * LangGraph
 * FastAPI
 * Pydantic
-* an optional OpenRouter LLM path
+* an optional OpenAI structured-output LLM path
 
 No paid API is required for the graded baseline.
 
@@ -549,13 +550,13 @@ This makes the baseline deterministic and avoids dependence on paid external ser
 
 ## Optional real LLM mode
 
-An optional OpenRouter path is available when:
+An optional OpenAI path is available when:
 
 ```text
 MOCK_LLM=0
 ```
 
-An API key is required for the real LLM path.
+`OPENAI_API_KEY` is required for the real LLM path. Invalid structured responses are retried up to two times after the initial attempt.
 
 Do not commit API keys or other secrets to GitHub.
 
