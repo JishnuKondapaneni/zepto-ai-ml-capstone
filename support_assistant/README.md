@@ -42,14 +42,14 @@ Policy intent routes through retrieval and generation. General intent skips retr
 
 ## Examples and raw JSON responses
 
-Policy query (`MOCK_LLM=1`, default). This raw response shows the project's deterministic mock behavior with `doc_01` as the retrieved chunk:
+Policy query (`MOCK_LLM=1`, default). This illustrative response assumes `doc_01` is the sole retrieved chunk:
 
 ```json
 {"query":"How long does delivery take?"}
 ```
 
 ```json
-{"answer":"Based on the retrieved context: Zepto delivers grocery and household essentials to serviceable pin codes within 10 to 30 minutes of order confirmation, depending on the customer's delivery zone and current order volume. Standard delivery is free on orders over INR 149; orders below this threshold incur a flat INR 25 delivery fee. Priority delivery, which reserves the next available rider slot, is available at checkout for an additional INR 15. Zepto does not currently deliver to addresses outside its listed serviceable pin codes.","sources":["doc_01"],"confidence":1.0}
+{"answer":"Based on the retrieved context: Zepto delivers grocery and household essentials to serviceable pin codes within 10 to 30 minutes of order confirmation, depending on the customer's delivery zone and current order volume. Standard delivery is free on orders over INR 149; orders below this threshold incur a flat INR 25 delivery fee.","sources":["doc_01"],"confidence":1.0}
 ```
 
 General query:
@@ -62,7 +62,7 @@ General query:
 {"answer":"I can only answer questions about Zepto policies right now.","sources":[],"confidence":1.0}
 ```
 
-The policy answer above is produced by the exact mock rule (`Based on the retrieved context: ` plus the first 300 characters of the top retrieved chunk). At runtime, `sources` contains the IDs of the chunks returned by ChromaDB; the example shows `doc_01` as its retrieved chunk. The precise retrieved chunks depend on the local index and query embedding.
+The policy answer above applies the exact mock rule (`Based on the retrieved context: ` plus the first 300 characters of the top retrieved chunk). The source field is illustrative: at runtime it contains the IDs returned by ChromaDB, whose results depend on the local index and query embedding.
 
 ## Mock and real LLM modes
 
