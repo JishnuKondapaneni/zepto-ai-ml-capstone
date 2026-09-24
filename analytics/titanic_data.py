@@ -30,6 +30,16 @@ def load_and_export_titanic() -> None:
     # This is the only sns.load_dataset() call in the project.
     df = sns.load_dataset("titanic")
 
+    # Initial profiling required for the Titanic data inspection.
+    print("\nDataset info:")
+    df.info()
+
+    print("\nDescriptive statistics:")
+    print(df.describe())
+
+    print("\nDataset shape:")
+    print(df.shape)
+
     # Immediately export the original dataset to CSV.
     df.to_csv(CSV_FILE, index=False)
 

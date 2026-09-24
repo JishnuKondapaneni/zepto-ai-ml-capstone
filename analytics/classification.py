@@ -562,6 +562,13 @@ def main() -> None:
         ).round(4)
     )
 
+    print(
+        "\nStratification preserves the original survived/not-survived "
+        "class proportions in both the training and test sets, reducing "
+        "the risk that the imbalanced target is represented differently "
+        "across the two splits."
+    )
+
     # ========================================================
     # STRATIFIED TRAIN / TEST SPLIT
     # ========================================================

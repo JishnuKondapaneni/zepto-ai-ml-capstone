@@ -1,13 +1,17 @@
 # Zepto Support Assistant
 
-## Architecture and request flow
+## Architecture walkthrough
 
-The application is a local retrieval-augmented question-answering API. Its policy knowledge base lives in `docs/`; ingestion creates document embeddings and stores them in a persistent ChromaDB collection. At request time, LangGraph classifies intent, retrieves policy context when appropriate, and generates the response.
+The application follows this end-to-end path:
 
 ```text
-Ingestion: docs/*.txt -> load_documents -> all-MiniLM-L6-v2 embeddings -> ChromaDB
-Request:   query -> classify_intent -> (policy: retrieve -> generate) | (general: fixed response)
+Ingestion -> Embedding -> ChromaDB -> Retrieval -> Generation -> Pydantic -> FastAPI
+     |            |           |           |            |             |          |
+ docs/*.txt   all-MiniLM   persistent   top-3 policy  deterministic  QueryResponse POST /ask
+              -L6-v2       collection   chunks       mock or LLM   validation
 ```
+
+`ingest.py` reads the eight policy documents and creates one chunk per file. Sentence Transformers (`all-MiniLM-L6-v2`) converts each chunk into an embedding, and `ingest.py` stores the text, embedding, and source metadata in the persistent ChromaDB collection. For a policy query, `retriever.py` embeds the query with the same model and asks ChromaDB for the three closest chunks. LangGraph's `retrieve_and_answer` node passes those chunks to the deterministic mock generator by default (`MOCK_LLM=1`), or to the optional real LLM path (`MOCK_LLM=0`). The graph returns the answer, document IDs, and confidence; `app.py` validates them as the Pydantic `QueryResponse` and exposes them through FastAPI's `POST /ask`. General queries take the graph's direct-answer path and skip retrieval and generation.
 
 ## File and function map
 
@@ -22,7 +26,7 @@ Request:   query -> classify_intent -> (policy: retrieve -> generate) | (general
 | `app.py` | FastAPI health route and `POST /ask` endpoint. |
 | `Dockerfile` | Installs dependencies, builds the local vector store into the image, and starts Uvicorn. |
 
-## Ingestion, embeddings, and retrieval
+## Ingestion, embeddings, and retrieval details
 
 Run `python -m support_assistant.ingest` from the repository root to read the eight non-empty `docs/doc_*.txt` files. Each file becomes one chunk with an ID such as `doc_01_chunk_01` and metadata containing `source` and `document_id`. The `all-MiniLM-L6-v2` Sentence Transformers model embeds each chunk. ChromaDB persists the embeddings locally under `support_assistant/chroma_db/` in the collection named `zepto_policies`, configured with cosine distance. At query time the same model embeds the query and retrieval returns the top three chunks.
 
@@ -38,16 +42,14 @@ Policy intent routes through retrieval and generation. General intent skips retr
 
 ## Examples and raw JSON responses
 
-Policy query:
+Policy query (`MOCK_LLM=1`, default). This raw response shows the project's deterministic mock behavior with `doc_01` as the retrieved chunk:
 
 ```json
 {"query":"How long does delivery take?"}
 ```
 
-Response shape for mock mode (illustrative placeholders, not a recorded runtime response): retrieval requests the top three chunks; `sources` contains the `document_id` for each chunk actually returned. The mock answer is the first 300 characters of the top chunk, prefixed as shown. The exact retrieved IDs and text could not be verified here because the embedding model was unavailable.
-
 ```json
-{"answer":"Based on the retrieved context: <first 300 characters of the top retrieved chunk>","sources":["<document_id from retrieved chunk 1>","<document_id from retrieved chunk 2>","<document_id from retrieved chunk 3>"],"confidence":1.0}
+{"answer":"Based on the retrieved context: Zepto delivers grocery and household essentials to serviceable pin codes within 10 to 30 minutes of order confirmation, depending on the customer's delivery zone and current order volume. Standard delivery is free on orders over INR 149; orders below this threshold incur a flat INR 25 delivery fee. Priority delivery, which reserves the next available rider slot, is available at checkout for an additional INR 15. Zepto does not currently deliver to addresses outside its listed serviceable pin codes.","sources":["doc_01"],"confidence":1.0}
 ```
 
 General query:
@@ -60,7 +62,7 @@ General query:
 {"answer":"I can only answer questions about Zepto policies right now.","sources":[],"confidence":1.0}
 ```
 
-The actual policy response source IDs depend on retrieved documents and are returned in `sources`.
+The policy answer above is produced by the exact mock rule (`Based on the retrieved context: ` plus the first 300 characters of the top retrieved chunk). At runtime, `sources` contains the IDs of the chunks returned by ChromaDB; the example shows `doc_01` as its retrieved chunk. The precise retrieved chunks depend on the local index and query embedding.
 
 ## Mock and real LLM modes
 
